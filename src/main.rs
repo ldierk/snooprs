@@ -25,6 +25,59 @@ const SUMMARY_REGEX: &str = r"Thread (?<thread>\d+); fd (?<fd>\d+); local (?<loc
 0x00000   4854 5450 2f31 2e31 2033 3032 204d 6f76        HTTP/1.1.302.Mov
  */
 const DATA_REGEX: &str = r"^0x[a-zA-Z0-9]{4}";
+#[derive(Debug)]
+struct Entry {
+    header: Header,
+    summary: Option<Summary>,
+    action: Option<String>,
+    data: Option<String>,
+}
+
+impl Entry {
+    fn new(header: Header) -> Self {
+        Entry {
+            header,
+            summary: None,
+            action: None,
+            data: None,
+        }
+    }
+}
+
+impl fmt::Display for Entry {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.header.is_error() {
+            write!(f, "{}\n", self.header)
+        } else {
+            if let Some(action) = &self.action {
+                if !has_data(&action) {
+                    write!(
+                        f,
+                        "{}\n{}\n{}\n{}\n{}\n",
+                        self.header,
+                        LIMITTER,
+                        self.summary.as_ref().unwrap(),
+                        self.action.as_ref().unwrap(),
+                        LIMITTER
+                    )
+                } else {
+                    write!(
+                        f,
+                        "{}\n{}\n{}\n{}\n{}\n{}\n",
+                        self.header,
+                        LIMITTER,
+                        self.summary.as_ref().unwrap(),
+                        self.action.as_ref().unwrap(),
+                        self.data.as_ref().unwrap(),
+                        LIMITTER
+                    )
+                }
+            } else {
+                write!(f, "{}\n", self.header)
+            }
+        }
+    }
+}
 
 #[derive(Debug)]
 enum STATE {
@@ -35,7 +88,7 @@ enum STATE {
     Data,
     ClosingLimit,
 }
-
+#[derive(Debug)]
 struct Header {
     date: DateTime<FixedOffset>,
     thread: u64,
@@ -78,7 +131,7 @@ impl fmt::Display for Header {
         )
     }
 }
-
+#[derive(Debug)]
 struct Summary {
     thread: u64,
     fd: u64,
@@ -115,15 +168,17 @@ fn snoop_to_text<'a>(line: &'a str) -> &'a str {
 
 //print text wrapped at 80 chars
 const WRAP_WIDTH: usize = 80;
-fn print_data(data: &String) {
+fn format_data(data: &String) -> String {
     let mut max = WRAP_WIDTH;
     let mut min = 0;
     let len = data.len();
     if len < max {
         max = len;
     }
+    let mut formatted = String::new();
     loop {
-        println!("{}", &data[min..max]);
+        formatted.push_str(&data[min..max]);
+        formatted.push_str("\n");
         min += WRAP_WIDTH;
         max += WRAP_WIDTH;
         if max > len {
@@ -133,6 +188,7 @@ fn print_data(data: &String) {
             break;
         }
     }
+    formatted
 }
 
 fn has_data(line: &str) -> bool {
@@ -148,38 +204,48 @@ fn parse(s2t: bool) {
 
     let mut state = STATE::Header;
     let mut data = String::new();
+    let mut entry: Option<Entry> = None;
+
+    //let mut header: Option<Header> = None;
+
     for line in stdin.lock().lines() {
         let line = line.unwrap();
         match state {
             STATE::Header => {
                 if head_re.is_match(&line) {
                     let header = Header::new(&head_re, &line);
-                    println!("{}", header);
-                    //headers with error messages are followed by the next header
-                    if !header.is_error() {
-                        state = STATE::OpeningLimit;
+                    entry = Some(Entry::new(header));
+                    if let Some(entry) = entry.as_ref() {
+                        if !entry.header.is_error() {
+                            state = STATE::OpeningLimit;
+                        } else {
+                            println!("{}", entry.header);
+                        }
                     }
                 }
             }
             STATE::OpeningLimit => {
                 if line == LIMITTER {
-                    println!("{}", line);
                     state = STATE::Summary;
                 }
             }
             STATE::Summary => {
                 if summary_re.is_match(&line) {
                     let summary = Summary::new(&summary_re, &line);
-                    println!("{}", summary);
+                    if let Some(entry) = entry.as_mut() {
+                        entry.summary = Some(summary);
+                    }
                     state = STATE::Action;
                 }
             }
             STATE::Action => {
-                println!("{}", line);
                 if has_data(&line) {
                     state = STATE::Data;
                 } else {
                     state = STATE::ClosingLimit;
+                }
+                if let Some(entry) = entry.as_mut() {
+                    entry.action = Some(line);
                 }
             }
             STATE::Data => {
@@ -194,24 +260,24 @@ fn parse(s2t: bool) {
                 //an empty line signals the end of data
                 } else if line.is_empty() {
                     if s2t {
-                        print_data(&data);
-                    } else {
-                        //we added one newline to much above
-                        if let Some(p) = data.strip_suffix("\n") {
-                            data = p.to_string();
+                        if let Some(entry) = entry.as_mut() {
+                            entry.data = Some(format_data(&data));
                         }
-                        println!("{}", data);
+                    } else {
+                        if let Some(entry) = entry.as_mut() {
+                            entry.data = Some(data.to_string());
+                        }
                     }
                     data.clear();
-                    println!(); //the empty line we're just handling
+                    //println!(); //the empty line we're just handling
                     state = STATE::ClosingLimit;
                 }
             }
             STATE::ClosingLimit => {
                 if line == LIMITTER {
-                    println!("{}", line);
-                    //one new newline after the LIMITTER
-                    println!();
+                    if let Some(entry) = entry.as_ref() {
+                        println!("{}", entry);
+                    }
                     state = STATE::Header;
                 }
             }
