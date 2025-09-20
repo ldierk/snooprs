@@ -25,6 +25,17 @@ const SUMMARY_REGEX: &str = r"Thread (?<thread>\d+); fd (?<fd>\d+); local (?<loc
 0x00000   4854 5450 2f31 2e31 2033 3032 204d 6f76        HTTP/1.1.302.Mov
  */
 const DATA_REGEX: &str = r"^0x[a-zA-Z0-9]{4}";
+
+#[derive(Debug)]
+enum STATE {
+    Header,
+    OpeningLimit,
+    Summary,
+    Action,
+    Data,
+    ClosingLimit,
+}
+
 #[derive(Debug)]
 struct ErrorEntry {
     header: Header,
@@ -77,31 +88,6 @@ impl fmt::Display for Entry {
     }
 }
 
-#[derive(Debug, Clone)]
-struct Action {
-    action: String,
-}
-impl Action {
-    fn has_data(&self) -> bool {
-        self.action.starts_with("Sending") || self.action.starts_with("Receiving")
-    }
-}
-
-impl fmt::Display for Action {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.action)
-    }
-}
-
-#[derive(Debug)]
-enum STATE {
-    Header,
-    OpeningLimit,
-    Summary,
-    Action,
-    Data,
-    ClosingLimit,
-}
 #[derive(Debug, Clone)]
 struct Header {
     date: DateTime<FixedOffset>,
@@ -169,6 +155,22 @@ impl Summary {
 impl fmt::Display for Summary {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Thread {}; fd {}; local {}; remote {}", self.thread, self.fd, self.local, self.remote)
+    }
+}
+
+#[derive(Debug, Clone)]
+struct Action {
+    action: String,
+}
+impl Action {
+    fn has_data(&self) -> bool {
+        self.action.starts_with("Sending") || self.action.starts_with("Receiving")
+    }
+}
+
+impl fmt::Display for Action {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.action)
     }
 }
 
