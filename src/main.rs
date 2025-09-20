@@ -1,4 +1,5 @@
 use chrono::{DateTime, FixedOffset};
+use clap::Parser;
 use regex::Regex;
 use std::{
     fmt,
@@ -138,14 +139,12 @@ fn has_data(line: &str) -> bool {
     line.starts_with("Sending") || line.starts_with("Receiving")
 }
 
-fn main() {
+fn parse(s2t: bool) {
     let head_re = Regex::new(HEADER_REGEX).unwrap();
     let summary_re = Regex::new(SUMMARY_REGEX).unwrap();
     let data_re = Regex::new(DATA_REGEX).unwrap();
 
     let stdin = io::stdin();
-    //snoop2text
-    let s2t = true;
 
     let mut state = STATE::Header;
     let mut data = String::new();
@@ -218,4 +217,17 @@ fn main() {
             }
         }
     }
+}
+
+#[derive(Parser, Debug)]
+#[command(about, long_about = None)]
+struct Args {
+    /// snoop to text
+    #[arg(short, long, action)]
+    text: bool,
+}
+
+fn main() {
+    let args = Args::parse();
+    parse(args.text);
 }
