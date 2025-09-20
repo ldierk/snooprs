@@ -1,0 +1,49 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'snooprs'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=snooprs",
+                    "--package=snooprs"
+                ],
+                "filter": {
+                    "name": "snooprs",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "stdio": "pdweb.snoop.log",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_BACKTRACE": "1"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'snooprs'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=snooprs",
+                    "--package=snooprs"
+                ],
+                "filter": {
+                    "name": "snooprs",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
