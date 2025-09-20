@@ -3,7 +3,7 @@ use clap::Parser;
 use regex::Regex;
 use std::{
     fmt::{self},
-    io::{self, BufRead},
+    io::{self, BufRead, Write},
 };
 
 const LIMITTER: &str = "----------------------------------------";
@@ -250,7 +250,7 @@ fn parse(s2t: bool) {
                     } else {
                         //if is_error we have a one-liner and we are done
                         let entry = construct_entry(&header, &summary, &action, &data);
-                        println!("{}", entry);
+                        let _ = writeln!(std::io::stdout(), "{}", entry);
                     }
                 }
             }
@@ -294,7 +294,7 @@ fn parse(s2t: bool) {
                         data = format_data(&data);
                     }
                     let entry = construct_entry(&header, &summary, &action, &data);
-                    println!("{}", entry);
+                    let _ = writeln!(std::io::stdout(), "{}", entry);
                     data.clear();
                     state = STATE::Header;
                 }
