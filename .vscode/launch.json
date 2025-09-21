@@ -22,7 +22,6 @@
             "args": [
                 "pdweb.snoop.log"
             ],
-            "stdio": "pdweb.snoop.log",
             "cwd": "${workspaceFolder}",
             "env": {
                 "RUST_BACKTRACE": "1"
@@ -48,7 +47,6 @@
                 "--id=10",
                 "pdweb.snoop.log"
             ],
-            "stdio": "pdweb.snoop.log",
             "cwd": "${workspaceFolder}",
             "env": {
                 "RUST_BACKTRACE": "1"
