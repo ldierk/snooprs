@@ -72,6 +72,14 @@ impl Entry {
     fn new_data_entry(header: Header, summary: Summary, action: Action, data: String) -> Self {
         Entry::DataEntry(DataEntry { header, summary, action, data })
     }
+
+    fn get_id(&self) -> u64 {
+        match self {
+            Entry::ErrorEntry(entry) => entry.header.thread,
+            Entry::ActionEntry(entry) => entry.header.thread,
+            Entry::DataEntry(entry) => entry.header.thread,
+        }
+    }
 }
 
 impl fmt::Display for Entry {
@@ -223,7 +231,21 @@ fn construct_entry(header: &Option<Header>, summary: &Option<Summary>, action: &
     }
 }
 
-fn parse(s2t: bool) {
+fn filter_entry(entry: &Entry, ids: &Option<Vec<u64>>) {
+    match ids {
+        //no filter given, print
+        None => {
+            let _ = writeln!(std::io::stdout(), "{}", entry);
+        }
+        Some(ids) => {
+            if ids.contains(&entry.get_id()) {
+                let _ = writeln!(std::io::stdout(), "{}", entry);
+            }
+        }
+    }
+}
+
+fn parse(s2t: bool, ids: &Option<Vec<u64>>) {
     let head_re = Regex::new(HEADER_REGEX).unwrap();
     let summary_re = Regex::new(SUMMARY_REGEX).unwrap();
     let data_re = Regex::new(DATA_REGEX).unwrap();
@@ -237,8 +259,6 @@ fn parse(s2t: bool) {
     let mut action: Option<Action> = None;
     let mut data: String = String::new();
 
-    //let mut header: Option<Header> = None;
-
     for line in stdin.lock().lines() {
         let line = line.unwrap();
         match state {
@@ -250,7 +270,7 @@ fn parse(s2t: bool) {
                     } else {
                         //if is_error we have a one-liner and we are done
                         let entry = construct_entry(&header, &summary, &action, &data);
-                        let _ = writeln!(std::io::stdout(), "{}", entry);
+                        filter_entry(&entry, &ids);
                     }
                 }
             }
@@ -294,7 +314,7 @@ fn parse(s2t: bool) {
                         data = format_data(&data);
                     }
                     let entry = construct_entry(&header, &summary, &action, &data);
-                    let _ = writeln!(std::io::stdout(), "{}", entry);
+                    filter_entry(&entry, &ids);
                     data.clear();
                     state = STATE::Header;
                 }
@@ -309,9 +329,19 @@ struct Args {
     /// snoop to text
     #[arg(short, long, action)]
     text: bool,
+    /// filter for thread id, can be specified multiple times
+    #[arg(short, long)]
+    id: Vec<u64>,
 }
 
 fn main() {
     let args = Args::parse();
-    parse(args.text);
+    println!("{:?}", args.id);
+    let ids;
+    if args.id.len() > 0 {
+        ids = Some(args.id);
+    } else {
+        ids = None;
+    }
+    parse(args.text, &ids);
 }

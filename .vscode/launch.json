@@ -29,6 +29,31 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug executable 'snooprs with filter'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=snooprs",
+                    "--package=snooprs"
+                ],
+                "filter": {
+                    "name": "snooprs",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "--id=21",
+                "--id=10"
+            ],
+            "stdio": "pdweb.snoop.log",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_BACKTRACE": "1"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug unit tests in executable 'snooprs'",
             "cargo": {
                 "args": [
