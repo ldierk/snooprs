@@ -19,7 +19,9 @@
                     "kind": "bin"
                 }
             },
-            "args": [],
+            "args": [
+                "pdweb.snoop.log"
+            ],
             "stdio": "pdweb.snoop.log",
             "cwd": "${workspaceFolder}",
             "env": {
@@ -43,7 +45,8 @@
             },
             "args": [
                 "--id=21",
-                "--id=10"
+                "--id=10",
+                "pdweb.snoop.log"
             ],
             "stdio": "pdweb.snoop.log",
             "cwd": "${workspaceFolder}",

@@ -3,7 +3,8 @@ use clap::Parser;
 use regex::Regex;
 use std::{
     fmt::{self},
-    io::{self, BufRead, Write},
+    fs::File,
+    io::{BufRead, BufReader, Write},
 };
 
 const LIMITTER: &str = "----------------------------------------";
@@ -66,6 +67,21 @@ impl Entry {
             action,
             data: data.to_owned(),
         })
+    }
+
+    fn new(header: &Option<Header>, summary: &Option<Summary>, action: &Option<Action>, data: &str) -> Entry {
+        let header = header.clone().unwrap();
+        if header.is_error() {
+            Entry::new_error_entry(header)
+        } else {
+            let summary = summary.clone().unwrap();
+            let action = action.clone().unwrap();
+            if action.has_data() {
+                Entry::new_data_entry(header, summary, action, data)
+            } else {
+                Entry::new_action_entry(header, summary, action)
+            }
+        }
     }
 
     fn get_id(&self) -> u64 {
@@ -181,7 +197,7 @@ impl fmt::Display for Action {
 0x3ea0   2d6c 6566 742d 7261 6469 7573 3a35 3025        -left-radius:50%
  */
 const START_OF_TEXT: usize = 56;
-fn snoop_to_text<'a>(line: &'a str) -> &'a str {
+fn snoop_to_text(line: &str) -> &str {
     &line[START_OF_TEXT..]
 }
 
@@ -210,21 +226,6 @@ fn format_data(data: &str) -> String {
     formatted
 }
 
-fn construct_entry(header: &Option<Header>, summary: &Option<Summary>, action: &Option<Action>, data: &str) -> Entry {
-    let header = header.clone().unwrap();
-    if header.is_error() {
-        Entry::new_error_entry(header)
-    } else {
-        let summary = summary.clone().unwrap();
-        let action = action.clone().unwrap();
-        if action.has_data() {
-            Entry::new_data_entry(header, summary, action, data)
-        } else {
-            Entry::new_action_entry(header, summary, action)
-        }
-    }
-}
-
 fn filter_entry(entry: &Entry, ids: &Option<Vec<u64>>) {
     match ids {
         //no filter given, print
@@ -239,12 +240,14 @@ fn filter_entry(entry: &Entry, ids: &Option<Vec<u64>>) {
     }
 }
 
-fn parse(s2t: bool, ids: &Option<Vec<u64>>, no_data: bool) {
+fn parse(filename: &str, s2t: bool, ids: &Option<Vec<u64>>, no_data: bool) {
     let head_re = Regex::new(HEADER_REGEX).unwrap();
     let summary_re = Regex::new(SUMMARY_REGEX).unwrap();
     let data_re = Regex::new(DATA_REGEX).unwrap();
 
-    let stdin = io::stdin();
+    let input = File::open(filename).unwrap();
+    let input = BufReader::new(input);
+    let mut input = input.lines();
 
     let mut state = STATE::Header;
     //the parts of an entry
@@ -253,7 +256,8 @@ fn parse(s2t: bool, ids: &Option<Vec<u64>>, no_data: bool) {
     let mut action: Option<Action> = None;
     let mut data: String = String::new();
 
-    for line in stdin.lock().lines() {
+    //for line in stdin.lines() {
+    while let Some(line) = input.next() {
         let line = line.unwrap();
         match state {
             STATE::Header => {
@@ -263,7 +267,7 @@ fn parse(s2t: bool, ids: &Option<Vec<u64>>, no_data: bool) {
                         state = STATE::OpeningLimit;
                     } else {
                         //if is_error we have a one-liner and we are done
-                        let entry = construct_entry(&header, &summary, &action, &data);
+                        let entry = Entry::new(&header, &summary, &action, &data);
                         filter_entry(&entry, &ids);
                     }
                 }
@@ -306,7 +310,7 @@ fn parse(s2t: bool, ids: &Option<Vec<u64>>, no_data: bool) {
                     if !no_data && s2t {
                         data = format_data(&data);
                     }
-                    let entry = construct_entry(&header, &summary, &action, &data);
+                    let entry = Entry::new(&header, &summary, &action, &data);
                     filter_entry(&entry, &ids);
                     data.clear();
                     state = STATE::Header;
@@ -317,20 +321,22 @@ fn parse(s2t: bool, ids: &Option<Vec<u64>>, no_data: bool) {
 }
 
 #[derive(Parser, Debug)]
-#[command(about, long_about = None)]
+#[command(about = "Parse a pdweb.snoop trace", long_about = None)]
 struct Args {
-    /// snoop to text
-    #[arg(short, long, action)]
-    text: bool,
+    /// file name
+    filename: String,
+    /// don't print data as hex
+    #[arg(short, long)]
+    text_only: bool,
     /// filter for thread id, can be specified multiple times
     #[arg(short, long)]
     id: Option<Vec<u64>>,
     /// don't print data
-    #[arg(short, long, action)]
+    #[arg(short, long)]
     no_data: bool,
 }
 
 fn main() {
     let args = Args::parse();
-    parse(args.text, &args.id, args.no_data);
+    parse(&args.filename, args.text_only, &args.id, args.no_data);
 }
