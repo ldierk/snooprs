@@ -11,22 +11,17 @@ const LIMITTER: &str = "----------------------------------------";
 //                     2025-09-14-19:30:11.018+01:00
 const DATE_FORMAT: &str = "%Y-%m-%d-%H:%M:%S%.3f%:z";
 
-/*
-2025-09-14-19:28:40.550+01:00I----- thread(16) trace.pdweb.snoop.client:1 /build/isam/src/i4w/pdwebrte/webcore/amw_snoop.cpp:108:
-*/
+//2025-09-14-19:28:40.550+01:00I----- thread(16) trace.pdweb.snoop.client:1 /build/isam/src/i4w/pdwebrte/webcore/amw_snoop.cpp:108:
 const HEADER_REGEX: &str =
     r"(?<date>\d\d\d\d-\d\d-\d\d-\d\d:\d\d:\d\d.\d\d\d\+\d\d:\d\d)I----- thread\((?<thread>\d\d)\) (?<component>.+) (?<file>.+:\d+:)(?<remainder>.*)";
-/*
-Thread 132916153280064; fd 261; local 10.42.0.160:35322; remote 10.43.9.26:9443
- */
+
+//Thread 132916153280064; fd 261; local 10.42.0.160:35322; remote 10.43.9.26:9443
+
 const SUMMARY_REGEX: &str = r"Thread (?<thread>\d+); fd (?<fd>\d+); local (?<local>.+); remote (?<remote>.+)";
 
-/*
-0x00000   4854 5450 2f31 2e31 2033 3032 204d 6f76        HTTP/1.1.302.Mov
- */
+//0x00000   4854 5450 2f31 2e31 2033 3032 204d 6f76        HTTP/1.1.302.Mov
 const DATA_REGEX: &str = r"^0x[a-zA-Z0-9]{4}";
 
-#[derive(Debug)]
 enum STATE {
     Header,
     OpeningLimit,
@@ -35,25 +30,20 @@ enum STATE {
     Data,
     ClosingLimit,
 }
-
-#[derive(Debug)]
 struct ErrorEntry {
     header: Header,
 }
-#[derive(Debug)]
 struct ActionEntry {
     header: Header,
     summary: Summary,
     action: Action,
 }
-#[derive(Debug)]
 struct DataEntry {
     header: Header,
     summary: Summary,
     action: Action,
     data: String,
 }
-#[derive(Debug)]
 enum Entry {
     ErrorEntry(ErrorEntry),
     ActionEntry(ActionEntry),
@@ -101,7 +91,7 @@ impl fmt::Display for Entry {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 struct Header {
     date: DateTime<FixedOffset>,
     thread: u64,
@@ -144,7 +134,7 @@ impl fmt::Display for Header {
         )
     }
 }
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 struct Summary {
     thread: u64,
     fd: u64,
@@ -171,7 +161,7 @@ impl fmt::Display for Summary {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 struct Action {
     action: String,
 }
