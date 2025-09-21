@@ -294,7 +294,7 @@ fn parse(s2t: bool, ids: &Option<Vec<u64>>, no_data: bool) {
                 }
             }
             STATE::Data => {
-                if data_re.is_match(&line) && !no_data {
+                if !no_data && data_re.is_match(&line) {
                     if s2t {
                         let text = snoop_to_text(&line);
                         data.push_str(text);
@@ -309,7 +309,7 @@ fn parse(s2t: bool, ids: &Option<Vec<u64>>, no_data: bool) {
             }
             STATE::ClosingLimit => {
                 if line == LIMITTER {
-                    if s2t && !no_data {
+                    if !no_data && s2t {
                         data = format_data(&data);
                     }
                     let entry = construct_entry(&header, &summary, &action, &data);
