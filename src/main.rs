@@ -245,7 +245,7 @@ fn filter_entry(entry: &Entry, ids: &Option<Vec<u64>>) {
     }
 }
 
-fn parse(s2t: bool, ids: &Option<Vec<u64>>) {
+fn parse(s2t: bool, ids: &Option<Vec<u64>>, no_data: bool) {
     let head_re = Regex::new(HEADER_REGEX).unwrap();
     let summary_re = Regex::new(SUMMARY_REGEX).unwrap();
     let data_re = Regex::new(DATA_REGEX).unwrap();
@@ -294,7 +294,7 @@ fn parse(s2t: bool, ids: &Option<Vec<u64>>) {
                 }
             }
             STATE::Data => {
-                if data_re.is_match(&line) {
+                if data_re.is_match(&line) && !no_data {
                     if s2t {
                         let text = snoop_to_text(&line);
                         data.push_str(text);
@@ -309,7 +309,7 @@ fn parse(s2t: bool, ids: &Option<Vec<u64>>) {
             }
             STATE::ClosingLimit => {
                 if line == LIMITTER {
-                    if s2t {
+                    if s2t && !no_data {
                         data = format_data(&data);
                     }
                     let entry = construct_entry(&header, &summary, &action, &data);
@@ -331,9 +331,12 @@ struct Args {
     /// filter for thread id, can be specified multiple times
     #[arg(short, long)]
     id: Option<Vec<u64>>,
+    /// don't print data
+    #[arg(short, long, action)]
+    no_data: bool,
 }
 
 fn main() {
     let args = Args::parse();
-    parse(args.text, &args.id);
+    parse(args.text, &args.id, args.no_data);
 }
