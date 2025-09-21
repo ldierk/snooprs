@@ -69,8 +69,13 @@ impl Entry {
         Entry::ActionEntry(ActionEntry { header, summary, action })
     }
 
-    fn new_data_entry(header: Header, summary: Summary, action: Action, data: String) -> Self {
-        Entry::DataEntry(DataEntry { header, summary, action, data })
+    fn new_data_entry(header: Header, summary: Summary, action: Action, data: &str) -> Self {
+        Entry::DataEntry(DataEntry {
+            header,
+            summary,
+            action,
+            data: data.to_owned(),
+        })
     }
 
     fn get_id(&self) -> u64 {
@@ -192,7 +197,7 @@ fn snoop_to_text<'a>(line: &'a str) -> &'a str {
 
 //print text wrapped at 80 chars
 const WRAP_WIDTH: usize = 80;
-fn format_data(data: &String) -> String {
+fn format_data(data: &str) -> String {
     let mut max = WRAP_WIDTH;
     let mut min = 0;
     let len = data.len();
@@ -215,7 +220,7 @@ fn format_data(data: &String) -> String {
     formatted
 }
 
-fn construct_entry(header: &Option<Header>, summary: &Option<Summary>, action: &Option<Action>, data: &String) -> Entry {
+fn construct_entry(header: &Option<Header>, summary: &Option<Summary>, action: &Option<Action>, data: &str) -> Entry {
     let header = header.clone().unwrap();
     if header.is_error() {
         Entry::new_error_entry(header)
@@ -223,7 +228,6 @@ fn construct_entry(header: &Option<Header>, summary: &Option<Summary>, action: &
         let summary = summary.clone().unwrap();
         let action = action.clone().unwrap();
         if action.has_data() {
-            let data = data.clone();
             Entry::new_data_entry(header, summary, action, data)
         } else {
             Entry::new_action_entry(header, summary, action)
