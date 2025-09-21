@@ -274,7 +274,6 @@ fn parse(s2t: bool, ids: &Option<Vec<u64>>) {
                     }
                 }
             }
-
             STATE::OpeningLimit => {
                 if line == LIMITTER {
                     state = STATE::Summary;
@@ -331,17 +330,10 @@ struct Args {
     text: bool,
     /// filter for thread id, can be specified multiple times
     #[arg(short, long)]
-    id: Vec<u64>,
+    id: Option<Vec<u64>>,
 }
 
 fn main() {
     let args = Args::parse();
-    println!("{:?}", args.id);
-    let ids;
-    if args.id.len() > 0 {
-        ids = Some(args.id);
-    } else {
-        ids = None;
-    }
-    parse(args.text, &ids);
+    parse(args.text, &args.id);
 }
