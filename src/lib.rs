@@ -1,5 +1,6 @@
 mod fields;
 use regex::Regex;
+use std::error::Error;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::{fmt, io::Lines};
@@ -108,20 +109,6 @@ const START_OF_TEXT: usize = 56;
 fn snoop_to_text(line: &str) -> &str {
     &line[START_OF_TEXT..]
 }
-#[derive(Debug)]
-pub struct SnoopError {
-    message: String,
-}
-impl fmt::Display for SnoopError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.message)
-    }
-}
-impl<E: std::error::Error> From<E> for SnoopError {
-    fn from(e: E) -> Self {
-        SnoopError { message: e.to_string() }
-    }
-}
 
 pub struct SnoopParser {
     wrap_width: usize,
@@ -135,7 +122,7 @@ pub struct SnoopParser {
 }
 
 impl SnoopParser {
-    pub fn new(filename: &str) -> Result<SnoopParser, SnoopError> {
+    pub fn new(filename: &str) -> Result<SnoopParser, Box<dyn Error>> {
         let head_re = Regex::new(HEADER_REGEX)?;
         let summary_re = Regex::new(SUMMARY_REGEX)?;
         let data_re = Regex::new(DATA_REGEX)?;
@@ -153,7 +140,7 @@ impl SnoopParser {
         })
     }
 
-    pub fn new_with_options(filename: &str, text_only: bool, no_data: bool) -> Result<SnoopParser, SnoopError> {
+    pub fn new_with_options(filename: &str, text_only: bool, no_data: bool) -> Result<SnoopParser, Box<dyn Error>> {
         match SnoopParser::new(filename) {
             Ok(other) => Ok(SnoopParser { text_only, no_data, ..other }),
             Err(e) => Err(e),
