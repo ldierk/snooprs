@@ -177,13 +177,13 @@ impl SnoopParser {
         self.filter = filter.clone();
     }
     pub fn parse_next_filtered(&mut self) -> Option<Entry> {
-        while let Some(e) = self.parse_next().as_ref() {
+        while let Some(e) = self.parse_next() {
             if let Some(filter) = &self.filter {
                 if filter.contains(&e.get_id()) {
-                    return Some(e.clone());
+                    return Some(e);
                 }
             } else {
-                return Some(e.clone());
+                return Some(e);
             }
         }
         None
