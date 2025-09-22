@@ -13,7 +13,6 @@ const HEADER_REGEX: &str =
     r"(?<date>\d\d\d\d-\d\d-\d\d-\d\d:\d\d:\d\d.\d\d\d\+\d\d:\d\d)I----- thread\((?<thread>\d\d)\) (?<component>.+) (?<file>.+:\d+:)(?<remainder>.*)";
 
 //Thread 132916153280064; fd 261; local 10.42.0.160:35322; remote 10.43.9.26:9443
-
 const SUMMARY_REGEX: &str = r"Thread (?<thread>\d+); fd (?<fd>\d+); local (?<local>.+); remote (?<remote>.+)";
 
 //0x00000   4854 5450 2f31 2e31 2033 3032 204d 6f76        HTTP/1.1.302.Mov
@@ -27,24 +26,20 @@ enum STATE {
     Data,
     ClosingLimit,
 }
-#[derive(Clone)]
 pub struct ErrorEntry {
     header: Header,
 }
-#[derive(Clone)]
 pub struct ActionEntry {
     header: Header,
     summary: Summary,
     action: Action,
 }
-#[derive(Clone)]
 pub struct DataEntry {
     header: Header,
     summary: Summary,
     action: Action,
     data: String,
 }
-#[derive(Clone)]
 pub enum Entry {
     ErrorEntry(ErrorEntry),
     ActionEntry(ActionEntry),
@@ -177,13 +172,13 @@ impl SnoopParser {
         self.filter = filter.clone();
     }
     pub fn parse_next_filtered(&mut self) -> Option<Entry> {
-        while let Some(e) = self.parse_next() {
+        while let Some(entry) = self.parse_next() {
             if let Some(filter) = &self.filter {
-                if filter.contains(&e.get_id()) {
-                    return Some(e);
+                if filter.contains(&entry.get_id()) {
+                    return Some(entry);
                 }
             } else {
-                return Some(e);
+                return Some(entry);
             }
         }
         None
