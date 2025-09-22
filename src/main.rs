@@ -1,5 +1,5 @@
 use clap::Parser;
-use snooprs::SnoopParser;
+use snooprs::{SnoopConfig, SnoopParser};
 use std::process;
 
 #[derive(Parser, Debug)]
@@ -20,13 +20,13 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-    let mut snoop = SnoopParser::new(&args.filename).unwrap_or_else(|err| {
+    let config = SnoopConfig::new(args.text_only, args.no_data, args.id);
+    let snoop = SnoopParser::open_with_config(&args.filename, config).unwrap_or_else(|err| {
         eprintln!("Error creating snoop parser: {err}");
         process::exit(1);
     });
-    snoop.set_text_only(args.text_only);
-    snoop.set_no_data(args.no_data);
-    snoop.set_filter(&args.id);
 
-    snoop.into_iter().for_each(|entry| println!("{entry}"));
+    for entry in snoop {
+        println!("{entry}");
+    }
 }

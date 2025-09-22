@@ -12,9 +12,9 @@ fn input_eq_output() {
     let mut buf = String::new();
     match input.read_to_string(&mut buf) {
         Ok(_) => {
-            let mut snoop = SnoopParser::new(&filename).unwrap();
+            let snoop = SnoopParser::open(&filename).unwrap();
             let mut buf2 = String::new();
-            while let Some(entry) = snoop.parse_next_filtered() {
+            for entry in snoop {
                 buf2.push_str(&entry.to_string());
                 buf2.push_str("\n");
             }
@@ -36,11 +36,11 @@ fn filtered_input_eq_output() {
     input2.read_to_string(&mut buf_file2).unwrap();
 
     let filter: Vec<u64> = vec![10];
-    let mut snoop = SnoopParser::new(&filename1).unwrap();
+    let mut snoop = SnoopParser::open(&filename1).unwrap();
     snoop.set_filter(&Some(filter));
 
     let mut buf_output = String::new();
-    while let Some(entry) = snoop.parse_next_filtered() {
+    for entry in snoop {
         buf_output.push_str(&entry.to_string());
         buf_output.push_str("\n");
     }

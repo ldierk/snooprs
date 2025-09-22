@@ -110,6 +110,18 @@ fn snoop_to_text(line: &str) -> &str {
     &line[START_OF_TEXT..]
 }
 
+pub struct SnoopConfig {
+    text_only: bool,
+    no_data: bool,
+    filter: Option<Vec<u64>>,
+}
+
+impl SnoopConfig {
+    pub fn new(text_only: bool, no_data: bool, filter: Option<Vec<u64>>) -> Self {
+        SnoopConfig { text_only, no_data, filter }
+    }
+}
+
 pub struct SnoopParser {
     wrap_width: usize,
     head_re: Regex,
@@ -130,7 +142,7 @@ impl Iterator for SnoopParser {
 }
 
 impl SnoopParser {
-    pub fn new(filename: &str) -> Result<SnoopParser, Box<dyn Error>> {
+    pub fn open(filename: &str) -> Result<SnoopParser, Box<dyn Error>> {
         let head_re = Regex::new(HEADER_REGEX)?;
         let summary_re = Regex::new(SUMMARY_REGEX)?;
         let data_re = Regex::new(DATA_REGEX)?;
@@ -148,9 +160,14 @@ impl SnoopParser {
         })
     }
 
-    pub fn new_with_options(filename: &str, text_only: bool, no_data: bool) -> Result<SnoopParser, Box<dyn Error>> {
-        match SnoopParser::new(filename) {
-            Ok(other) => Ok(SnoopParser { text_only, no_data, ..other }),
+    pub fn open_with_config(filename: &str, config: SnoopConfig) -> Result<SnoopParser, Box<dyn Error>> {
+        match SnoopParser::open(filename) {
+            Ok(other) => Ok(SnoopParser {
+                text_only: config.text_only,
+                no_data: config.no_data,
+                filter: config.filter,
+                ..other
+            }),
             Err(e) => Err(e),
         }
     }
