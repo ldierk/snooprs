@@ -15,7 +15,8 @@ fn input_eq_output() {
             let mut snoop = SnoopParser::new(&filename).unwrap();
             let mut buf2 = String::new();
             while let Some(entry) = snoop.parse_next_filtered() {
-                buf2.push_str(&format!("{}\n", entry));
+                buf2.push_str(&entry.to_string());
+                buf2.push_str("\n");
             }
             assert_eq!(buf, buf2);
         }
