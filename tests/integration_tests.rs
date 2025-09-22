@@ -23,3 +23,26 @@ fn input_eq_output() {
         Err(e) => panic!("{}", e),
     }
 }
+#[test]
+fn filtered_input_eq_output() {
+    let filename1 = "pdweb.snoop.log";
+    let filename2 = "pdweb.snoop.log.10";
+
+    let mut input1 = BufReader::new(File::open(filename1).unwrap());
+    let mut input2 = BufReader::new(File::open(filename2).unwrap());
+    let mut buf_file1 = String::new();
+    let mut buf_file2 = String::new();
+    input1.read_to_string(&mut buf_file1).unwrap();
+    input2.read_to_string(&mut buf_file2).unwrap();
+
+    let filter: Vec<u64> = vec![10];
+    let mut snoop = SnoopParser::new(&filename1).unwrap();
+    snoop.set_filter(&Some(filter));
+
+    let mut buf_output = String::new();
+    while let Some(entry) = snoop.parse_next_filtered() {
+        buf_output.push_str(&entry.to_string());
+        buf_output.push_str("\n");
+    }
+    assert_eq!(buf_file2, buf_output);
+}

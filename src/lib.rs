@@ -121,6 +121,14 @@ pub struct SnoopParser {
     filter: Option<Vec<u64>>,
 }
 
+impl Iterator for SnoopParser {
+    type Item = Entry;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.parse_next_filtered()
+    }
+}
+
 impl SnoopParser {
     pub fn new(filename: &str) -> Result<SnoopParser, Box<dyn Error>> {
         let head_re = Regex::new(HEADER_REGEX)?;

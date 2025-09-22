@@ -28,7 +28,5 @@ fn main() {
     snoop.set_no_data(args.no_data);
     snoop.set_filter(&args.id);
 
-    while let Some(entry) = snoop.parse_next_filtered() {
-        println!("{}", entry);
-    }
+    snoop.into_iter().for_each(|entry| println!("{entry}"));
 }
